@@ -1,0 +1,207 @@
+﻿<style>
+    .ngMatrix-header tbody tr:first-child td.sortBy:after {
+        content: "";
+    }
+    .ngMatrix-header tbody tr:first-child td.desc:after {
+        content: "\2193";
+    }
+
+    .ngMatrix-header tbody tr:first-child td.asc:after {
+        content: "\2191";
+    }
+    .ngMatrix-body tbody tr:hover:nth-child(odd) {
+        background-color: #DAE8F0;
+    }
+    .ngMatrix-body tbody tr td { 
+        border: 1px solid #CCCCCC;
+    }
+
+    .scroll-table table{
+      width: 100%;
+      height: auto;
+      border-collapse: collapse;
+      table-layout: fixed;
+      position: relative;
+    }
+
+    .scroll-table .ngMatrix-header{
+      /*float:left;*/
+      position: relative;
+      overflow: hidden;
+    }
+    .scroll-table .ngMatrix-body{
+      /*float: left;*/
+      overflow-y: scroll;
+      overflow-x: hidden;
+      position: relative;
+    }
+    .scroll-table .ngMatrix-body > table{
+      width: 100%;
+      position: relative;
+      empty-cells: show;
+      outline: 0;
+      overflow-x: hidden;
+    }
+
+    .content-loading {
+        color: whitesmoke;
+        background-color: #006699;
+        width: 100px;
+        font-size: small;
+        cursor: progress;
+    }
+
+    .filterBox {
+        box-shadow: inset 1px -1px 5px 0 #CCCCCC;
+        -webkit-box-shadow: inset 1px -1px 5px 0 #CCCCCC;
+        -moz-box-shadow: inset 1px -1px 5px 0 #CCCCCC;
+        -o-box-shadow: inset 1px -1px 5px 0 #CCCCCC;
+        cursor: pointer;
+        border: solid 1px #C7C6C7;
+        padding: 5px;
+        height: 18px;
+        background-color: #fff;
+        border-radius: 2px;
+        -mox-border-radius: 2px;
+        -webkit-border-radius: 2px;
+        -o-border-radius: 2px;
+    }
+
+    .filterPanel {
+        border: solid 1px #C7C6C7;
+        padding: 5px;
+        height: 30px;
+        background-color: #fff;
+        border-radius: 5px;
+        -mox-border-radius: 5px;
+        -webkit-border-radius: 5px;
+        -o-border-radius: 5px;
+    }
+
+    .header-cell {
+        vertical-align: middle;
+        padding-left: 5px;
+    }
+
+    .delete-button-column {
+        vertical-align: middle;
+        text-align: center;
+        cursor: pointer;
+    }
+    .delete-button-column-header {
+        width:20px;
+    }
+    .content-cell {
+        vertical-align: middle;
+        padding-left: 5px;
+    }
+    .no-data-message {
+        border: solid 1px #f6dddd; 
+        background-color: #f6dddd; 
+        border-radius: 4px; 
+        font-family: Tahoma; 
+        font-size: 11px; 
+        margin: 10px;
+        padding: 8px; 
+        min-width:50px;
+    }
+    .view-detail-column { 
+        width:10px;
+        cursor:pointer;
+        text-align:center;
+    }
+    .view-detail-column-image { 
+        width:15px;
+        height:15px;
+    }
+</style>
+
+<div class="{{ cssClass }}">
+    <div class="filterPanel" ng-show="{{ showFilter }}">
+        <label>Filter: </label>
+        <input class="filterBox" ng-model="searchText">
+    </div>
+    <!--Selected Row No:{{ selectedRowIdx}}-->
+    <br />
+    <div >
+        <div class="content-loading" ng-show="directiveControl.contentLoading">Loading data...</div>
+        <div class="no-data-message" ng-show="noDataMessageDisplay">{{ noDataMessage!=null && noDataMessage!='' ? noDataMessage:'No data.' }}</div>
+        <div class="scroll-table">
+            <div class="ngMatrix-header-container">
+                <div class="ngMatrix-header">
+                    <table >
+                        <colgroup>
+                            <col ng-show="showcheckboxColumn"/>
+                            <col ng-show="showViewDetailColumn" />
+                            <col ng-repeat="head in headers" ng-style="{width:findColumnWidth(head.name)}" />
+                            <col ng-show="showDeleteButtonColumn" class="delete-button-column-header"/>
+                        </colgroup>
+                        <tbody>
+                            <tr class="{{ gridheaderCss }}">
+                                <td id="chkBoxColHeader" style="width: 30px; margin-left: 100px;" ng-show="showcheckboxColumn"></td>
+                                <td ng-show="showViewDetailColumn" class="view-detail-column"></td>
+                                <td class="header-cell"
+                                    ng-class="{
+									'sortBy' : head.name == orderHeader,
+									'asc':head.name == orderHeader && orderDirection == true, 
+									'desc':head.name == orderHeader && orderDirection == false}"
+                                    ng-click="orderTableBy(head.name)"
+                                    ng-repeat="head in headers">{{ findDisplayName(head.name) }}
+                                </td>
+                                <td id="deleteButtonColumnHeader" ng-show="showDeleteButtonColumn"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="ngMatrix-body" ng-style="{height:gridHeight}">
+                <table class="{{ gridCss }}">
+                    <colgroup>
+                       <col ng-show="showcheckboxColumn"/>
+                       <col ng-show="showViewDetailColumn" />
+                       <col ng-repeat="head in headers" ng-style="{width:findColumnWidth(head.name)}"/>
+                       <col ng-show="showDeleteButtonColumn" class="delete-button-column-header"/>
+                    </colgroup>
+                    <tbody >
+                         <tr id="{{ gridMasterIdentifier + $index }}"
+                             ng-repeat-start="d in data | filter:searchText"
+                             ng-click="onRowClick($index,$event)"
+                             ng-keydown="onRowSelect($index,$event)"
+                             ng-class="alternateRowColors($index)">
+                            <td id="chkBoxCol" ng-show="showcheckboxColumn" style="width: 30px;">
+                                <input ng-model="d.selected" ng-click="onItemChecked($event,$index,d)" type="checkbox" />
+                            </td>
+                            <td ng-show="showViewDetailColumn" class="view-detail-column">
+                                <img src="{{viewDetailImageUrl}}" 
+                                     ng-click ="onViewDetailsClick($event,d)" 
+                                     class="view-detail-column-image" 
+                                     alt="{{ viewDetailText }}" />
+                            </td>
+                            <td class="content-cell" ng-repeat="head in headers">
+                                <div title="{{ d[head.name] | dataFormatter:head.name:d }}" ng-style="shortifyText(d[head.name].length)">{{d[head.name] | dataFormatter:head.name:d}}</div>
+                            </td>
+                            <td class="delete-button-column"
+                                title="Delete"
+                                ng-show="showDeleteButtonColumn"
+                                ng-click="deleteRecord($event,d)"><span class="ui-icon ui-icon-trash"></span></td>
+                        </tr>
+                <tr id="{{gridDetailIdentifier + $index}}" style="display: none;"  ng-repeat-end="" class="collapsedContent">
+                    <td colspan="{{ getCollapsedPaneWidth() }}">
+                        <div>
+                            <div class="{{ collapsedrowheaderCss }}">{{collapsedrowCaption}}</div>
+                            <div style="margin: 7px;">
+                                <div ng-include src='itemTemplateUrl' ></div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="{{ gridfooterCss }}" ng-show="{{ showFooter }}">
+        <br />
+        Displaying {{data.length}} results.
+    </div>
+</div>
